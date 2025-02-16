@@ -59,7 +59,7 @@ func TestCleanInput(t *testing.T) {
 			expectedWord := c.expected[i]
 
 			if strings.Compare(word, expectedWord) != 0 {
-				t.Errorf("Words don't match! Word: %v Expected: %v", word, expectedWord)
+				t.Errorf("Words don't match! Actual: %v Expected: %v", word, expectedWord)
 				t.Fail()
 			}
 		}
