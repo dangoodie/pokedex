@@ -28,8 +28,13 @@ func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"map": {
 			name:        "map",
-			description: "Use your map to find an area",
+			description: "Move forward on the map 20 locations",
 			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Move backward on the map 20 locations",
+			callback:    commandMapb,
 		},
 		"help": {
 			name:        "help",
@@ -59,6 +64,51 @@ func commandMap(cfg *Config) error {
 	fullURL := ""
 	if cfg.Next != nil {
 		fullURL = *cfg.Next
+	} else {
+		fullURL = apiUrl + "location-area/"
+	}
+
+	res, err := http.Get(fullURL)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	// Unmarshal the JSON
+	var pokeMap PokeMap
+	decoder := json.NewDecoder(res.Body)
+	err = decoder.Decode(&pokeMap)
+	if err != nil {
+		return err
+	}
+
+	// Set the map configuration
+	setMapConfig(&pokeMap, cfg)
+	offset, err := getOffset(fullURL)
+	if err != nil {
+		return err
+	}
+
+	// Print the JSON data for now
+	fmt.Printf("Count: %d\n", pokeMap.Count)
+	if pokeMap.Next != nil {
+		fmt.Printf("Next: %s\n", *pokeMap.Next)
+	}
+	if pokeMap.Previous != nil {
+		fmt.Printf("Previous: %s\n", *pokeMap.Previous)
+	}
+	for i, result := range pokeMap.Results {
+		fmt.Printf("%d: %s\n", i+1+offset, result.Name)
+	}
+
+	return nil
+}
+
+func commandMapb(cfg *Config) error {
+	// Make Get request
+	fullURL := ""
+	if cfg.Previous != nil {
+		fullURL = *cfg.Previous
 	} else {
 		fullURL = apiUrl + "location-area/"
 	}
