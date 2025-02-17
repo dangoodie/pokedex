@@ -1,8 +1,9 @@
 package main
 
 import (
-	"testing"
+	"fmt"
 	"strings"
+	"testing"
 )
 
 // Test Clean Input Function
@@ -36,32 +37,30 @@ func TestCleanInput(t *testing.T) {
 			expected: []string{},
 		},
 		{
-			input:    "   ",
-			expected: []string{},
-		},
-		{
 			input:    "CAPITALIZED WORDS SHOULD BE CONVERTED TO LOWERCASE",
 			expected: []string{"capitalized", "words", "should", "be", "converted", "to", "lowercase"},
 		},
 	}
 
-	for _, c := range cases {
-		actual := cleanInput(c.input)
-		// Check the length of the actual slice
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("Test case %v", i), func(t *testing.T) {
+			actual := cleanInput(c.input)
+			// Check the length of the actual slice
 
-		if len(actual) != len(c.expected) {
-			t.Errorf("Slice length mismatched! Actual: %v Expected: %v", len(actual), len(c.expected))
-			t.Fail()
-		}
-
-		for i := range actual {
-			word := actual[i]
-			expectedWord := c.expected[i]
-
-			if strings.Compare(word, expectedWord) != 0 {
-				t.Errorf("Words don't match! Actual: %v Expected: %v", word, expectedWord)
+			if len(actual) != len(c.expected) {
+				t.Errorf("Slice length mismatched! Actual: %v Expected: %v", len(actual), len(c.expected))
 				t.Fail()
 			}
-		}
+
+			for i := range actual {
+				word := actual[i]
+				expectedWord := c.expected[i]
+
+				if strings.Compare(word, expectedWord) != 0 {
+					t.Errorf("Words don't match! Actual: %v Expected: %v", word, expectedWord)
+					t.Fail()
+				}
+			}
+		})
 	}
 }

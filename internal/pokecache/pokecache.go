@@ -56,7 +56,7 @@ func (c *Cache) Get(key *string) ([]byte, bool) {
 
 // Periodically triggers a cache reap
 func (c *Cache) reapLoop(interval time.Duration) {
-	ticker := time.NewTicker(5 * time.Second) // will reap every 5 seconds
+	ticker := time.NewTicker(interval) // will reap every 5 seconds
 	defer ticker.Stop()
 
 	for range ticker.C {
