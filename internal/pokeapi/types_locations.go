@@ -1,6 +1,6 @@
 package pokeapi
 
-type PokeMap struct {
+type LocationList struct {
 	URL      *string
 	Count    int     `json:"count"`
 	Next     *string `json:"next"`

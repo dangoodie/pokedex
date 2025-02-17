@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-func (c *Client) ListLocations(pageUrl *string) (PokeMap, error) {
+func (c *Client) ListLocations(pageUrl *string) (LocationList, error) {
 	fullURL := ""
 	if pageUrl != nil {
 		fullURL = *pageUrl
@@ -15,20 +15,20 @@ func (c *Client) ListLocations(pageUrl *string) (PokeMap, error) {
 	// Make Get Request
 	res, err := c.httpClient.Get(fullURL)
 	if err != nil {
-		return PokeMap{}, err
+		return LocationList{}, err
 	}
 	defer res.Body.Close()
 
 	// Unmarshal JSON
-	var pokeMap PokeMap
+	var locationList LocationList
 	decoder := json.NewDecoder(res.Body)
-	err = decoder.Decode(&pokeMap)
+	err = decoder.Decode(&locationList)
 	if err != nil {
-		return PokeMap{}, err
+		return LocationList{}, err
 	}
 
 	// Save the full URL for caching purposes
-	pokeMap.URL = &fullURL
+	locationList.URL = &fullURL
 
-	return pokeMap, nil
+	return locationList, nil
 }
