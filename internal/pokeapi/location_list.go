@@ -9,7 +9,7 @@ func (c *Client) ListLocations(pageUrl *string) (PokeMap, error) {
 	if pageUrl != nil {
 		fullURL = *pageUrl
 	} else {
-		fullURL = baseURL + "location-area/"
+		fullURL = BaseURL + "location-area/?offset=0&limit=20" // default query for page 1
 	}
 
 	// Make Get Request
@@ -26,6 +26,9 @@ func (c *Client) ListLocations(pageUrl *string) (PokeMap, error) {
 	if err != nil {
 		return PokeMap{}, err
 	}
+
+	// Save the full URL for caching purposes
+	pokeMap.URL = &fullURL
 
 	return pokeMap, nil
 }

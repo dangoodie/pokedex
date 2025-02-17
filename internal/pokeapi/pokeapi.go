@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	baseURL = "https://pokeapi.co/api/v2/"
+	BaseURL = "https://pokeapi.co/api/v2/"
 )
 
 // Client
