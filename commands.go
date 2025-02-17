@@ -1,182 +1,51 @@
 package main
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
-	"strconv"
 )
 
-const (
-	apiUrl = "https://pokeapi.co/api/v2/"
-)
-
-type Config struct {
-	Next     *string
-	Previous *string
-}
-
-type cliCommand struct {
-	name        string
-	description string
-	callback    func(*Config) error
-}
-
-func getCommands() map[string]cliCommand {
-	return map[string]cliCommand{
-		"map": {
-			name:        "map",
-			description: "Move forward on the map 20 locations",
-			callback:    commandMap,
-		},
-		"mapb": {
-			name:        "mapb",
-			description: "Move backward on the map 20 locations",
-			callback:    commandMapb,
-		},
-		"help": {
-			name:        "help",
-			description: "Display a help message",
-			callback:    commandHelp,
-		},
-		"exit": {
-			name:        "exit",
-			description: "Exit the Pokedex",
-			callback:    commandExit,
-		},
-	}
-}
-
-type PokeMap struct {
-	Count    int     `json:"count"`
-	Next     *string `json:"next"`
-	Previous *string `json:"previous"`
-	Results  []struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"results"`
-}
-
-func commandMap(cfg *Config) error {
-	// Make Get request
-	fullURL := ""
-	if cfg.Next != nil {
-		fullURL = *cfg.Next
-	} else {
-		fullURL = apiUrl + "location-area/"
-	}
-
-	res, err := http.Get(fullURL)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	// Unmarshal the JSON
-	var pokeMap PokeMap
-	decoder := json.NewDecoder(res.Body)
-	err = decoder.Decode(&pokeMap)
+func commandMap(cfg *config) error {
+	// Get PokeMap from PokeApi
+	pokeMap, err := cfg.pokeapiClient.ListLocations(cfg.nextLocationUrl)
 	if err != nil {
 		return err
 	}
 
-	// Set the map configuration
-	setMapConfig(&pokeMap, cfg)
-	offset, err := getOffset(fullURL)
-	if err != nil {
-		return err
-	}
+	cfg.nextLocationUrl = pokeMap.Next
+	cfg.prevLocationUrl = pokeMap.Previous
 
-	// Print the JSON data for now
-	fmt.Printf("Count: %d\n", pokeMap.Count)
-	if pokeMap.Next != nil {
-		fmt.Printf("Next: %s\n", *pokeMap.Next)
-	}
-	if pokeMap.Previous != nil {
-		fmt.Printf("Previous: %s\n", *pokeMap.Previous)
-	}
-	for i, result := range pokeMap.Results {
-		fmt.Printf("%d: %s\n", i+1+offset, result.Name)
+	// Print the locations
+	for _, location := range pokeMap.Results {
+		fmt.Printf("%s\n", location.Name)
 	}
 
 	return nil
 }
 
-func commandMapb(cfg *Config) error {
-	// Make Get request
-	fullURL := ""
-	if cfg.Previous != nil {
-		fullURL = *cfg.Previous
-	} else {
-		fullURL = apiUrl + "location-area/"
+func commandMapb(cfg *config) error {
+	if cfg.prevLocationUrl == nil {
+		return errors.New("you're on the first page")
 	}
 
-	res, err := http.Get(fullURL)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	// Unmarshal the JSON
-	var pokeMap PokeMap
-	decoder := json.NewDecoder(res.Body)
-	err = decoder.Decode(&pokeMap)
+	pokeMap, err := cfg.pokeapiClient.ListLocations(cfg.prevLocationUrl)
 	if err != nil {
 		return err
 	}
 
-	// Set the map configuration
-	setMapConfig(&pokeMap, cfg)
-	offset, err := getOffset(fullURL)
-	if err != nil {
-		return err
-	}
+	cfg.nextLocationUrl = pokeMap.Next
+	cfg.prevLocationUrl = pokeMap.Previous
 
-	// Print the JSON data for now
-	fmt.Printf("Count: %d\n", pokeMap.Count)
-	if pokeMap.Next != nil {
-		fmt.Printf("Next: %s\n", *pokeMap.Next)
-	}
-	if pokeMap.Previous != nil {
-		fmt.Printf("Previous: %s\n", *pokeMap.Previous)
-	}
-	for i, result := range pokeMap.Results {
-		fmt.Printf("%d: %s\n", i+1+offset, result.Name)
+	// Print the locations
+	for _, location := range pokeMap.Results {
+		fmt.Printf("%s\n", location.Name)
 	}
 
 	return nil
 }
 
-func setMapConfig(pokeMap *PokeMap, cfg *Config) {
-	if pokeMap.Next != nil {
-		cfg.Next = pokeMap.Next
-	}
-
-	if pokeMap.Previous != nil {
-		cfg.Previous = pokeMap.Previous
-	}
-}
-
-func getOffset(fullURL string) (int, error) {
-	parsedURL, err := url.Parse(fullURL)
-	if err != nil {
-		return 0, err
-	}
-
-	queries := parsedURL.Query()
-	offsetStr := queries.Get("offset")
-
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil {
-		return 0, nil
-	}
-
-	return offset, nil
-}
-
-func commandHelp(cfg *Config) error {
+func commandHelp(cfg *config) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -188,7 +57,7 @@ func commandHelp(cfg *Config) error {
 	return nil
 }
 
-func commandExit(cfg *Config) error {
+func commandExit(cfg *config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
