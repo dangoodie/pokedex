@@ -4,17 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 )
 
 const (
 	apiUrl = "https://pokeapi.co/api/v2/"
 )
 
+type Config struct {
+	Next     *string
+	Previous *string
+}
+
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*Config) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -47,9 +54,16 @@ type PokeMap struct {
 	} `json:"results"`
 }
 
-func commandMap() error {
+func commandMap(cfg *Config) error {
 	// Make Get request
-	res, err := http.Get(apiUrl + "location-area/")
+	fullURL := ""
+	if cfg.Next != nil {
+		fullURL = *cfg.Next
+	} else {
+		fullURL = apiUrl + "location-area/"
+	}
+
+	res, err := http.Get(fullURL)
 	if err != nil {
 		return err
 	}
@@ -63,6 +77,13 @@ func commandMap() error {
 		return err
 	}
 
+	// Set the map configuration
+	setMapConfig(&pokeMap, cfg)
+	offset, err := getOffset(fullURL)
+	if err != nil {
+		return err
+	}
+
 	// Print the JSON data for now
 	fmt.Printf("Count: %d\n", pokeMap.Count)
 	if pokeMap.Next != nil {
@@ -72,13 +93,40 @@ func commandMap() error {
 		fmt.Printf("Previous: %s\n", *pokeMap.Previous)
 	}
 	for i, result := range pokeMap.Results {
-		fmt.Printf("%d: %s\n", i+1, result.Name)
+		fmt.Printf("%d: %s\n", i+1+offset, result.Name)
 	}
 
 	return nil
 }
 
-func commandHelp() error {
+func setMapConfig(pokeMap *PokeMap, cfg *Config) {
+	if pokeMap.Next != nil {
+		cfg.Next = pokeMap.Next
+	}
+
+	if pokeMap.Previous != nil {
+		cfg.Previous = pokeMap.Previous
+	}
+}
+
+func getOffset(fullURL string) (int, error) {
+	parsedURL, err := url.Parse(fullURL)
+	if err != nil {
+		return 0, err
+	}
+
+	queries := parsedURL.Query()
+	offsetStr := queries.Get("offset")
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil {
+		return 0, nil
+	}
+
+	return offset, nil
+}
+
+func commandHelp(cfg *Config) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -90,7 +138,7 @@ func commandHelp() error {
 	return nil
 }
 
-func commandExit() error {
+func commandExit(cfg *Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
