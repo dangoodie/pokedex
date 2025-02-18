@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/dangoodie/pokedex/internal/pokeapi"
 )
@@ -25,7 +26,7 @@ func commandCatch(cfg *config, args *[]string) error {
 	caught := catchPokemon(&pokemonDetails)
 	if caught {
 		fmt.Printf("%s was caught!\n", pokemonDetails.Name)
-		cfg.userPokedex[pokemonDetails.Name] = pokemonDetails
+		cfg.userPokedex[strings.ToLower(pokemonDetails.Name)] = pokemonDetails
 	} else {
 		fmt.Printf("%s escaped!\n", pokemonDetails.Name)
 	}
