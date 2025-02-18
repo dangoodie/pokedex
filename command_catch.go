@@ -13,7 +13,7 @@ func commandCatch(cfg *config, args *[]string) error {
 	}
 	//Print catching pokemon
 	pokemonName := (*args)[1]
-	fmt.Printf("Throwing a Pokeball at %s\n", pokemonName)
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
 
 	// Get pokemon details
 	pokemonDetails, err := cfg.pokeapiClient.GetPokemonDetails(&pokemonName)
@@ -24,15 +24,16 @@ func commandCatch(cfg *config, args *[]string) error {
 	// Try to catch pokemon
 	caught := catchPokemon(&pokemonDetails)
 	if caught {
-		fmt.Printf("Caught %s\n", pokemonDetails.Name)
+		fmt.Printf("%s was caught!\n", pokemonDetails.Name)
+		cfg.userPokedex[pokemonDetails.Name] = pokemonDetails
 	} else {
-		fmt.Printf("Didn't catch %s\n", pokemonDetails.Name)
+		fmt.Printf("%s escaped!\n", pokemonDetails.Name)
 	}
 
 	return nil
 }
 
-func getCatchChance(baseExp int) float64 {
+func GetCatchChance(baseExp int) float64 {
 	// Constants
 	maxBaseExp := 395.0 // Chansey's base experience
 	k := 50.0           // Arbitrary balancing factor to avoid low catch rates
@@ -48,7 +49,7 @@ func getCatchChance(baseExp int) float64 {
 }
 
 func catchPokemon(pokemon *pokeapi.PokemonDetails) bool {
-	catchChance := getCatchChance(pokemon.BaseExperience)
+	catchChance := GetCatchChance(pokemon.BaseExperience)
 	roll := rand.Float64()
 
 	return roll < catchChance
