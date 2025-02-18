@@ -2,6 +2,7 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 )
 
@@ -27,6 +28,11 @@ func (c *Client) ListLocations(pageUrl *string) (LocationList, error) {
 		}
 		defer res.Body.Close()
 
+		// Check if Not Found
+		if res.StatusCode > 299 {
+			return LocationList{}, fmt.Errorf("error code: %s", res.Status)
+		}
+
 		// Read data from the response body
 		data, err = io.ReadAll(res.Body)
 		if err != nil {
@@ -35,7 +41,7 @@ func (c *Client) ListLocations(pageUrl *string) (LocationList, error) {
 
 		// Cache the response
 		c.cache.Add(&fullURL, data)
-	} 
+	}
 
 	// Unmarshal JSON
 	var locationList LocationList
