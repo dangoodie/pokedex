@@ -7,7 +7,7 @@ import (
 
 type Cache struct {
 	entries map[string]*cacheEntry
-	mutex   sync.Mutex
+	mutex   *sync.Mutex
 }
 
 type cacheEntry struct {
@@ -15,16 +15,16 @@ type cacheEntry struct {
 	val       []byte
 }
 
-func NewCache(interval time.Duration) *Cache {
+func NewCache(interval time.Duration) Cache {
 	cache := Cache{
 		entries: make(map[string]*cacheEntry),
-		mutex:   sync.Mutex{},
+		mutex:   &sync.Mutex{},
 	}
 
 	// Start the reaploop
 	go cache.reapLoop(interval)
 
-	return &cache
+	return cache
 }
 
 func (c *Cache) Add(key *string, val []byte) {
@@ -56,7 +56,7 @@ func (c *Cache) Get(key *string) ([]byte, bool) {
 
 // Periodically triggers a cache reap
 func (c *Cache) reapLoop(interval time.Duration) {
-	ticker := time.NewTicker(interval) // will reap every 5 seconds
+	ticker := time.NewTicker(interval) 
 	defer ticker.Stop()
 
 	for range ticker.C {

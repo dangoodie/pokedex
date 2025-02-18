@@ -2,6 +2,7 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"io"
 )
 
 func (c *Client) ListLocations(pageUrl *string) (LocationList, error) {
@@ -12,23 +13,32 @@ func (c *Client) ListLocations(pageUrl *string) (LocationList, error) {
 		fullURL = BaseURL + "location-area/?offset=0&limit=20" // default query for page 1
 	}
 
-	// Make Get Request
-	res, err := c.httpClient.Get(fullURL)
-	if err != nil {
-		return LocationList{}, err
-	}
-	defer res.Body.Close()
+	// Check cache for hit
+	data, found := c.cache.Get(&fullURL)
+	if !found {
+		// Make Get Request
+		res, err := c.httpClient.Get(fullURL)
+		if err != nil {
+			return LocationList{}, err
+		}
+		defer res.Body.Close()
+
+		// Read data from the response body
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			return LocationList{}, err
+		}
+
+		// Cache the response
+		c.cache.Add(&fullURL, data)
+	} 
 
 	// Unmarshal JSON
 	var locationList LocationList
-	decoder := json.NewDecoder(res.Body)
-	err = decoder.Decode(&locationList)
+	err := json.Unmarshal(data, &locationList)
 	if err != nil {
 		return LocationList{}, err
 	}
-
-	// Save the full URL for caching purposes
-	locationList.URL = &fullURL
 
 	return locationList, nil
 }
