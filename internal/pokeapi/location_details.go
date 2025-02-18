@@ -28,6 +28,11 @@ func (c *Client) GetLocationDetails(location *string) (LocationDetails, error) {
 		}
 		defer res.Body.Close()
 
+		// Check if Not Found
+		if res.StatusCode > 299 {
+			return LocationDetails{}, fmt.Errorf("error code: %s", res.Status)
+		}
+
 		// Read data from the response body
 		data, err = io.ReadAll(res.Body)
 		if err != nil {
