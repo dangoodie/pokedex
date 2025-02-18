@@ -18,7 +18,7 @@ type config struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(cfg *config, args []string) error
 }
 
 func startREPL(cfg *config) {
@@ -35,7 +35,7 @@ func startREPL(cfg *config) {
 
 		command, ok := getCommands()[args[0]]
 		if ok {
-			err := command.callback(cfg)
+			err := command.callback(cfg, args)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -61,6 +61,11 @@ func getCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "Move backward on the map 20 locations",
 			callback:    commandMapb,
+		},
+		"explore": {
+			name:        "explore",
+			description: "Search a location for Pokemon",
+			callback:    commandExplore,
 		},
 		"help": {
 			name:        "help",

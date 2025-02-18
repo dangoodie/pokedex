@@ -2,15 +2,16 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 )
 
-func (c *Client) ListLocations(pageUrl *string) (LocationList, error) {
+func (c *Client) GetLocationDetails(location *string) (LocationDetails, error) {
 	fullURL := ""
-	if pageUrl != nil {
-		fullURL = *pageUrl
+	if location == nil {
+		return LocationDetails{}, fmt.Errorf("must have location")
 	} else {
-		fullURL = BaseURL + "location-area/?offset=0&limit=20" // default query for page 1
+		fullURL = BaseURL + "location-area/" + *location + "/"
 	}
 
 	var data []byte
@@ -23,26 +24,26 @@ func (c *Client) ListLocations(pageUrl *string) (LocationList, error) {
 		// Make Get Request
 		res, err := c.httpClient.Get(fullURL)
 		if err != nil {
-			return LocationList{}, err
+			return LocationDetails{}, err
 		}
 		defer res.Body.Close()
 
 		// Read data from the response body
 		data, err = io.ReadAll(res.Body)
 		if err != nil {
-			return LocationList{}, err
+			return LocationDetails{}, err
 		}
 
 		// Cache the response
 		c.cache.Add(&fullURL, data)
-	} 
-
-	// Unmarshal JSON
-	var locationList LocationList
-	err = json.Unmarshal(data, &locationList)
-	if err != nil {
-		return LocationList{}, err
 	}
 
-	return locationList, nil
+	// Unmarshal JSON
+	var locationDetails LocationDetails
+	err = json.Unmarshal(data, &locationDetails)
+	if err != nil {
+		return LocationDetails{}, err
+	}
+
+	return locationDetails, nil
 }

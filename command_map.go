@@ -6,7 +6,7 @@ import (
 
 )
 
-func commandMap(cfg *config) error {
+func commandMap(cfg *config, args []string) error {
 	// Get PokeMap from PokeApi
 	locationList, err := cfg.pokeapiClient.ListLocations(cfg.nextLocationUrl)
 	if err != nil {
@@ -24,7 +24,7 @@ func commandMap(cfg *config) error {
 	return nil
 }
 
-func commandMapb(cfg *config) error {
+func commandMapb(cfg *config, args []string) error {
 	// Stop if on first page
 	if cfg.prevLocationUrl == nil {
 		return errors.New("you're on the first page")
