@@ -33,7 +33,7 @@ A simple command-line Pokédex powered by the [PokéAPI](https://pokeapi.co/). T
    ```
 2. Run the CLI:
    ```sh
-   go run main.go
+   go run .
    ```
 
 ---
